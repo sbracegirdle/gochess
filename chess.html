@@ -1,0 +1,71 @@
+{{define "body"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess Game</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/htmx.org"></script>
+  </head>
+  <body class="flex justify-center items-center h-screen bg-black flex-col">
+    {{template "board" .}}
+    <!-- Whose turn is it? -->
+    <div class="mt-4">
+      <p class="text-white">
+        {{if eq .GetCurrentPlayerColor "White"}}White{{else}}Black{{end}}'s turn
+      </p>
+    </div>
+    <div class="mt-4">
+      <form
+        action="/move"
+        method="POST"
+        hx-post="/move"
+        hx-target="this"
+        id="moveForm"
+        hx-on::after-request="this.reset()"
+      >
+        <label for="move" class="text-white"
+          >Enter your move in chess notation (e.g., e2e4):</label
+        >
+        <input type="text" id="move" name="move" required />
+        <input type="submit" value="Submit" />
+      </form>
+    </div>
+  </body>
+</html>
+{{end}} {{define "board"}}
+<div
+  class="grid grid-cols-8 gap-0.5 border-2 border-white"
+  hx-get="/board"
+  hx-trigger="from:#moveForm"
+>
+  {{ $game := . }} {{ $letters := split "abcdefgh" }}
+  <!-- Generate chess board -->
+  {{range $i := until 8}} {{range $j := until 8}}
+  <div
+    class="
+      {{if eq (mod (add $i $j) 2) 0}}
+        bg-black text-white
+      {{else}}
+        bg-white text-black
+      {{end}}
+      h-16 w-16 flex justify-center items-center text-center relative"
+  >
+    {{ $piece := index $game.Board $i $j }} {{if $piece}}
+    <!-- <img src="/static/img/{{ $piece }}.png" alt="{{ $piece }}" /> -->
+    <!-- No images yet, use text for now -->
+    <p>{{ $piece }}</p>
+    {{end}}
+    <!-- Add chess coordinates -->
+    <p class="absolute bottom-0 right-0 text-xs z-10">
+      {{index $letters $j}}{{sub 8 $i}}
+    </p>
+  </div>
+
+  {{end}}{{end}}
+</div>
+{{end}}

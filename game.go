@@ -1,6 +1,9 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type PieceType string
 
@@ -108,9 +111,24 @@ func NewGame(player1Name, player2Name string) *Game {
 		Board:   board,
 		Players: [2]Player{player1, player2},
 		State:   Ongoing,
+		History: []Move{},
 	}
 
 	return &game
+}
+
+func (g *Game) GetCurrentPlayerColor() PieceColor {
+	currentPlayerColor := White
+	if len(g.History) > 0 {
+		if g.History[len(g.History)-1].Color == White {
+			currentPlayerColor = Black
+		}
+	}
+	// Print log
+	fmt.Println("Current player color: ", currentPlayerColor)
+	// Print history
+	fmt.Println("History: ", g.History)
+	return currentPlayerColor
 }
 
 func (g *Game) MovePiece(currentX, currentY, newX, newY int) error {
@@ -120,13 +138,7 @@ func (g *Game) MovePiece(currentX, currentY, newX, newY int) error {
 	}
 
 	// Infer the current player's color from the game history. If no history, assume white
-	currentPlayerColor := White
-	if len(g.History) > 0 {
-		// Need to invert the color of the last move
-		if g.History[len(g.History)-1].Color == White {
-			currentPlayerColor = Black
-		}
-	}
+	currentPlayerColor := g.GetCurrentPlayerColor()
 	otherPlayerColor := Black
 	if currentPlayerColor == Black {
 		otherPlayerColor = White
@@ -186,4 +198,18 @@ func (g *Game) IsCheckmate(color PieceColor) bool {
 	}
 
 	return true
+}
+
+func notationToCoordinates(move string) (source, target [2]int, err error) {
+	if len(move) != 4 {
+		return source, target, fmt.Errorf("invalid move notation")
+	}
+
+	source[0] = int(move[0] - 'a')
+	source[1] = int(move[1] - '1')
+
+	target[0] = int(move[2] - 'a')
+	target[1] = int(move[3] - '1')
+
+	return source, target, nil
 }
